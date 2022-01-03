@@ -104,7 +104,7 @@ void graphe_detruire(graphe *g);
  * En dehors des fonctions internes à la bibliothèque, cette fonction ne devrait
  * pas être utilisée sur des graphes non orientés.
  */
-int graphe_ajouter_arc(graphe *g, int v, int w, double val);
+int graphe_ajouter_arc(graphe *g, int v, int w, int val);
 
 /**
  * \brief Ajoute une arête entre deux sommets dans le graphe non orienté
@@ -117,7 +117,7 @@ int graphe_ajouter_arc(graphe *g, int v, int w, double val);
  *
  * Ne devrait pas être utilisée sur des graphes orientés.
  */
-int graphe_ajouter_arete(graphe* g, int v, int w, double val);
+int graphe_ajouter_arete(graphe* g, int v, int w, int val);
 
 /**
  * \brief Supprime un arc entre deux sommets dans le graphe orienté

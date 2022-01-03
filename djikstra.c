@@ -5,144 +5,107 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
-
 #include "djikstra.h"
+#include "graphe-4.c"
+#include "graphe-4.h"
+#include "msuc.c"
+#include "msuc.h"
+#include "vlist.c"
+#include "vlist.h"
 
-
-
-
-
-void permuterTasMinNoed(struct TasMinNoed **a,
-                     struct TasMinNoed **b)
+// A utility function to swap two
+// nodes of min heap.
+// Needed for min heapify
+void swapMinHeapNode(struct MinHeapNode **a,
+                     struct MinHeapNode **b)
 {
-    struct TasMinNoed *t = *a;
+    struct MinHeapNode *t = *a;
     *a = *b;
     *b = t;
 }
 
-
-void transformer_en_TasMin(struct TasMin *tasMin,
+// A standard function to
+// heapify at given idx
+// This function also updates
+// position of nodes when they are swapped.
+// Position is needed for decreaseKey()
+void minHeapify(struct MinHeap *minHeap,
                 int idx)
 {
-    int minimum, gauche, droite;
-    minimum = idx;
-    gauche = 2 * idx + 1;
-    droite = 2 * idx + 2;
+    int smallest, left, right;
+    smallest = idx;
+    left = 2 * idx + 1;
+    right = 2 * idx + 2;
 
-    if (gauche < tasMin->taille &&
-        tasMin->tableau[gauche]->dist <
-            tasMin->tableau[minimum]->dist)
-        minimum = gauche;
+    if (left < minHeap->size &&
+        minHeap->array[left]->dist <
+            minHeap->array[smallest]->dist)
+        smallest = left;
 
-    if (droite < tasMin->taille &&
-        tasMin->tableau[droite]->dist <
-            tasMin->tableau[minimum]->dist)
-        minimum = droite;
+    if (right < minHeap->size &&
+        minHeap->array[right]->dist <
+            minHeap->array[smallest]->dist)
+        smallest = right;
 
-    if (minimum != idx)
+    if (smallest != idx)
     {
         // The nodes to be swapped in min heap
-        tasminnoed *noedMin =
-            tasMin->tableau[minimum];
-        tasminnoed *indiceNoed =
-            tasMin->tableau[idx];
+        minheapnode *smallestNode =
+            minHeap->array[smallest];
+        minheapnode *idxNode =
+            minHeap->array[idx];
 
         // Swap positions
-        tasMin->pos[noedMin->v] = idx;
-        tasMin->pos[indiceNoed->v] = minimum;
+        minHeap->pos[smallestNode->v] = idx;
+        minHeap->pos[idxNode->v] = smallest;
 
         // Swap nodes
-        swapMinHeapNode(&tasMin->tableau[minimum],
-                        &tasMin->tableau[idx]);
+        swapMinHeapNode(&minHeap->array[smallest],
+                        &minHeap->array[idx]);
 
-        permuterTasMinNoed(tasMin, minimum);
+        minHeapify(minHeap, smallest);
     }
 }
 
-
-
-
 // A utility function to check if
 // the given minHeap is empty or not
-int estVide(struct TasMin *tasMin)
+int isEmpty(struct MinHeap *minHeap)
 {
-    return tasMin->taille == 0;
+    return minHeap->size == 0;
 }
 
-        
-// Standard function to extract
-// minimum node from heap
-struct TasMinNoed *get_min(struct TasMin *
-                                   tasMin)
-{
-    if (estVide(tasMin))
-        return NULL;
-
-    // Store the root node
-    struct TasMinNoed *racine =
-        tasMin->tableau[0];
-
-    // Replace root node with last node
-    struct TasMinNoed *dernierNoed =
-        tasMin->tableau[tasMin->taille - 1];
-    tasMin->tableau[0] = dernierNoed;
-
-    // Update position of last node
-    tasMin->pos[racine->v] = tasMin->taille - 1;
-    tasMin->pos[dernierNoed->v] = 0;
-
-    // Reduce heap size and heapify root
-    --tasMin->taille;
-    transformer_en_TasMin(tasMin, 0);
-
-    return racine;
-}
-
-
-
-
-
-
-// Function to decreasy dist value
-// of a given vertex v. This function
-// uses pos[] of min heap to get the
-// current index of node in min heap
-void decrementerCle(struct TasMin *tasMin,
+void decreaseKey(struct MinHeap *minHeap,
                  int v, int dist)
 {
     // Get the index of v in heap array
-    int i = tasMin->pos[v];
+    int i = minHeap->pos[v];
 
     // Get the node and update its dist value
-    tasMin->tableau[i]->dist = dist;
+    minHeap->array[i]->dist = dist;
 
     // Travel up while the complete
     // tree is not hepified.
     // This is a O(Logn) loop
-    while (i && tasMin->tableau[i]->dist <
-                    tasMin->tableau[(i - 1) / 2]->dist)
+    while (i && minHeap->array[i]->dist <
+                    minHeap->array[(i - 1) / 2]->dist)
     {
         // Swap this node with its parent
-        tasMin->pos[tasMin->tableau[i]->v] =
+        minHeap->pos[minHeap->array[i]->v] =
             (i - 1) / 2;
-        tasMin->pos[tasMin->tableau[(i - 1) / 2]->v] = i;
-        permuterTasMinNoed(&tasMin->tableau[i],
-                        &tasMin->tableau[(i - 1) / 2]);
+        minHeap->pos[minHeap->array[(i - 1) / 2]->v] = i;
+        swapMinHeapNode(&minHeap->array[i],
+                        &minHeap->array[(i - 1) / 2]);
 
         // move to parent index
         i = (i - 1) / 2;
     }
 }
 
-
-
-
-
 // A utility function to check if a given vertex
 // 'v' is in min heap or not
-bool inclusDansTasMin(struct TasMin *tasMin, int v)
+bool isInMinHeap(struct MinHeap *minHeap, int v)
 {
-    if (tasMin->pos[v] < tasMin->taille)
+    if (minHeap->pos[v] < minHeap->size)
         return true;
     return false;
 }
@@ -155,11 +118,113 @@ void printArr(int dist[], int n)
         printf("%d \t\t %d\n", i, dist[i]);
 }
 
+// The main function that calculates
+// distances of shortest paths from src to all
+// vertices. It is a O(ELogV) function
+void dijkstra(struct Graph *graph, int src)
+{
 
-int main(){
-    return;
+    // Get the number of vertices in graph
+    int V = graph->V;
+
+    // dist values used to pick
+    // minimum val edge in cut
+    int dist[V];
+
+    // minHeap represents set E
+    struct MinHeap *minHeap = createMinHeap(V);
+
+    // Initialize min heap with all
+    // vertices. dist value of all vertices
+    for (int v = 0; v < V; ++v)
+    {
+        dist[v] = INT_MAX;
+        minHeap->array[v] = newMinHeapNode(v,
+                                           dist[v]);
+        minHeap->pos[v] = v;
+    }
+
+    // Make dist value of src vertex
+    // as 0 so that it is extracted first
+    minHeap->array[src] =
+        newMinHeapNode(src, dist[src]);
+    minHeap->pos[src] = src;
+    dist[src] = 0;
+    decreaseKey(minHeap, src, dist[src]);
+
+    // Initially size of min heap is equal to V
+    minHeap->size = V;
+
+    // In the followin loop,
+    // min heap contains all nodes
+    // whose shortest distance
+    // is not yet finalized.
+    while (!isEmpty(minHeap))
+    {
+        // Extract the vertex with
+        // minimum distance value
+        struct MinHeapNode *minHeapNode =
+            extractMin(minHeap);
+
+        // Store the extracted vertex number
+        int u = minHeapNode->v;
+
+        // Traverse through all adjacent
+        // vertices of u (the extracted
+        // vertex) and update
+        // their distance values
+        struct AdjListNode *pCrawl =
+            graph->array[u].head;
+        while (pCrawl != NULL)
+        {
+            int v = pCrawl->dest;
+
+            // If shortest distance to v is
+            // not finalized yet, and distance to v
+            // through u is less than its
+            // previously calculated distance
+            if (isInMinHeap(minHeap, v) &&
+                dist[u] != INT_MAX &&
+                pCrawl->val + dist[u] < dist[v])
+            {
+                dist[v] = dist[u] + pCrawl->val;
+
+                // update distance
+                // value in min heap also
+                decreaseKey(minHeap, v, dist[v]);
+            }
+            pCrawl = pCrawl->next;
+        }
+    }
+
+    // print the calculated shortest distances
+    printArr(dist, V);
 }
 
+// Driver program to test above functions
+int main()
+{
+    // create the graph given in above fugure
+    graphe graph;
 
+    int V = 9;
+    graphe_stable(&graph, 5, 0);
+    graphe_ajouter_arc(&graph, 0, 1, 4);
+    graphe_ajouter_arc(&graph, 0, 7, 8);
+    graphe_ajouter_arc(&graph, 1, 2, 8);
+    graphe_ajouter_arc(&graph, 1, 7, 11);
+    graphe_ajouter_arc(&graph, 2, 3, 7);
+    graphe_ajouter_arc(&graph, 2, 8, 2);
+    graphe_ajouter_arc(&graph, 2, 5, 4);
+    graphe_ajouter_arc(&graph, 3, 4, 9);
+    graphe_ajouter_arc(&graph, 3, 5, 14);
+    graphe_ajouter_arc(&graph, 4, 5, 10);
+    graphe_ajouter_arc(&graph, 5, 6, 2);
+    graphe_ajouter_arc(&graph, 6, 7, 1);
+    graphe_ajouter_arc(&graph, 6, 8, 6);
+    graphe_ajouter_arc(&graph, 7, 8, 7);
 
+    dijkstra(&graph, 0);
 
+    return 0;
+}

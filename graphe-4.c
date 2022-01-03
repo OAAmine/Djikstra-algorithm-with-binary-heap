@@ -66,7 +66,7 @@ void graphe_detruire(graphe *g) {
  * Si le graphe est non orienté, utiliser les fonction _arete
  */
 
-int graphe_ajouter_arc(graphe *g, int v, int w, double val) {
+int graphe_ajouter_arc(graphe *g, int v, int w, int val) {
 	int stat =0;
 	msuc *nv_vois;
 	
@@ -89,7 +89,7 @@ int graphe_ajouter_arc(graphe *g, int v, int w, double val) {
 	return stat;
 }
 
-int graphe_ajouter_arete(graphe* g, int v, int w, double val) {
+int graphe_ajouter_arete(graphe* g, int v, int w, int val) {
 	int stat;
 
 	/* insertion de w dans la liste de voisins de v */
