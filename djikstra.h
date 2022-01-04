@@ -3,16 +3,19 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
+#include "msuc.h"
+#include "msuc.c"
+
 
 
 // A structure to represent a
 // node in adjacency list
-struct AdjListNode //same as msuc 
-{
-    int dest;
-    int val;
-    struct AdjListNode *next;
-};
+// struct msuc //same as msuc 
+// {
+//     int sommet;
+//     int valeur;
+//     struct msuc *suivant;
+// };
 
 // A structure to represent
 // an adjacency list
@@ -20,7 +23,7 @@ struct AdjList //same as vlist but with card and dm
 {
 
     // Pointer to head node of list
-    struct AdjListNode *head;
+    struct msuc *head;
 };
 
 // A structure to represent a graph.
@@ -35,15 +38,15 @@ struct Graph // same as graph
 
 // A utility function to create
 // a new adjacency list node
-struct AdjListNode *newAdjListNode(
-    int dest, int val)
+struct msuc *newmsuc(
+    int sommet, int valeur)
 {
-    struct AdjListNode *newNode =
-        (struct AdjListNode *)
-            malloc(sizeof(struct AdjListNode));
-    newNode->dest = dest;
-    newNode->val = val;
-    newNode->next = NULL;
+    struct msuc *newNode =
+        (struct msuc *)
+            malloc(sizeof(struct msuc));
+    newNode->sommet = sommet;
+    newNode->valeur = valeur;
+    newNode->suivant = NULL;
     return newNode;
 }
 

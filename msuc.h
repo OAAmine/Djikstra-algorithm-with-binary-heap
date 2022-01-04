@@ -13,7 +13,7 @@
  */
 typedef struct msuc {
 	int sommet; /**< sommet successeur du sommet considéré */
-    double valeur;/**< valeur de l'arc ou de l'arête menant du sommet considéré à
+    int valeur;/**< valeur de l'arc ou de l'arête menant du sommet considéré à
                     ce successeur */
     struct msuc *suivant;/**< pointeur vers le prochain successeur (NULL s'il
                            n'y en a pas). */

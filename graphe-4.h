@@ -28,33 +28,6 @@
  */
 
 
-/*fonction ajouter par amine*/
-// Structure to represent a min heap node
-struct noed_tas_min
-{
-    int v;
-    int dist;
-};
-typedef struct noed_tas_min ntm;
-
-
-// Structure to represent a min heap
-struct tas_min
-{
-
-    // Number of heap nodes present currently
-    int taille;
-
-    // Capacity of min heap
-    int capacite;
-
-    // This is needed for decreaseKey()
-    int *pos;
-    ntm **tableau;
-};
-typedef struct tas_min tm;
-
-
 
 
 

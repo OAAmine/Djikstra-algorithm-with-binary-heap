@@ -5,13 +5,142 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
-#include "djikstra.h"
-#include "graphe-4.c"
-#include "graphe-4.h"
-#include "msuc.c"
-#include "msuc.h"
-#include "vlist.c"
-#include "vlist.h"
+
+
+// A structure to represent a
+// node in adjacency list
+struct AdjListNode
+{
+    int dest;
+    int weight;
+    struct AdjListNode *next;
+};
+
+// A structure to represent
+// an adjacency list
+struct AdjList
+{
+
+    // Pointer to head node of list
+    struct AdjListNode *head;
+};
+
+// A structure to represent a graph.
+// A graph is an array of adjacency lists.
+// Size of array will be V (number of
+// vertices in graph)
+struct Graph
+{
+    int V;
+    struct AdjList *array;
+};
+
+// A utility function to create
+// a new adjacency list node
+struct AdjListNode *newAdjListNode(
+    int dest, int weight)
+{
+    struct AdjListNode *newNode =
+        (struct AdjListNode *)
+            malloc(sizeof(struct AdjListNode));
+    newNode->dest = dest;
+    newNode->weight = weight;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// A utility function that creates
+// a graph of V vertices
+struct Graph *createGraph(int V)
+{
+    struct Graph *graph = (struct Graph *)
+        malloc(sizeof(struct Graph));
+    graph->V = V;
+
+    // Create an array of adjacency lists.
+    // Size of array will be V
+    graph->array = (struct AdjList *)
+        malloc(V * sizeof(struct AdjList));
+
+    // Initialize each adjacency list
+    // as empty by making head as NULL
+    for (int i = 0; i < V; ++i)
+        graph->array[i].head = NULL;
+
+    return graph;
+}
+
+// Adds an edge to an undirected graph
+void addEdge(struct Graph *graph, int src,
+             int dest, int weight)
+{
+    // Add an edge from src to dest.
+    // A new node is added to the adjacency
+    // list of src. The node is
+    // added at the beginning
+    struct AdjListNode *newNode =
+        newAdjListNode(dest, weight);
+    newNode->next = graph->array[src].head;
+    graph->array[src].head = newNode;
+
+    // Since graph is undirected,
+    // add an edge from dest to src also
+    newNode = newAdjListNode(src, weight);
+    newNode->next = graph->array[dest].head;
+    graph->array[dest].head = newNode;
+}
+
+// Structure to represent a min heap node
+struct MinHeapNode
+{
+    int v;
+    int dist;
+};
+
+// Structure to represent a min heap
+struct MinHeap
+{
+
+    // Number of heap nodes present currently
+    int size;
+
+    // Capacity of min heap
+    int capacity;
+
+    // This is needed for decreaseKey()
+    int *pos;
+    struct MinHeapNode **array;
+};
+
+// A utility function to create a
+// new Min Heap Node
+struct MinHeapNode *newMinHeapNode(int v,
+                                   int dist)
+{
+    struct MinHeapNode *minHeapNode =
+        (struct MinHeapNode *)
+            malloc(sizeof(struct MinHeapNode));
+    minHeapNode->v = v;
+    minHeapNode->dist = dist;
+    return minHeapNode;
+}
+
+// A utility function to create a Min Heap
+struct MinHeap *createMinHeap(int capacity)
+{
+    struct MinHeap *minHeap =
+        (struct MinHeap *)
+            malloc(sizeof(struct MinHeap));
+    minHeap->pos = (int *)malloc(
+        capacity * sizeof(int));
+    minHeap->size = 0;
+    minHeap->capacity = capacity;
+    minHeap->array =
+        (struct MinHeapNode **)
+            malloc(capacity *
+                   sizeof(struct MinHeapNode *));
+    return minHeap;
+}
 
 // A utility function to swap two
 // nodes of min heap.
@@ -50,9 +179,9 @@ void minHeapify(struct MinHeap *minHeap,
     if (smallest != idx)
     {
         // The nodes to be swapped in min heap
-        minheapnode *smallestNode =
+        struct MinHeapNode *smallestNode =
             minHeap->array[smallest];
-        minheapnode *idxNode =
+        struct MinHeapNode *idxNode =
             minHeap->array[idx];
 
         // Swap positions
@@ -68,12 +197,44 @@ void minHeapify(struct MinHeap *minHeap,
 }
 
 // A utility function to check if
-// the given minHeap is empty or not
+// the given minHeap is ampty or not
 int isEmpty(struct MinHeap *minHeap)
 {
     return minHeap->size == 0;
 }
 
+// Standard function to extract
+// minimum node from heap
+struct MinHeapNode *extractMin(struct MinHeap *
+                                   minHeap)
+{
+    if (isEmpty(minHeap))
+        return NULL;
+
+    // Store the root node
+    struct MinHeapNode *root =
+        minHeap->array[0];
+
+    // Replace root node with last node
+    struct MinHeapNode *lastNode =
+        minHeap->array[minHeap->size - 1];
+    minHeap->array[0] = lastNode;
+
+    // Update position of last node
+    minHeap->pos[root->v] = minHeap->size - 1;
+    minHeap->pos[lastNode->v] = 0;
+
+    // Reduce heap size and heapify root
+    --minHeap->size;
+    minHeapify(minHeap, 0);
+
+    return root;
+}
+
+// Function to decreasy dist value
+// of a given vertex v. This function
+// uses pos[] of min heap to get the
+// current index of node in min heap
 void decreaseKey(struct MinHeap *minHeap,
                  int v, int dist)
 {
@@ -128,7 +289,7 @@ void dijkstra(struct Graph *graph, int src)
     int V = graph->V;
 
     // dist values used to pick
-    // minimum val edge in cut
+    // minimum weight edge in cut
     int dist[V];
 
     // minHeap represents set E
@@ -185,9 +346,9 @@ void dijkstra(struct Graph *graph, int src)
             // previously calculated distance
             if (isInMinHeap(minHeap, v) &&
                 dist[u] != INT_MAX &&
-                pCrawl->val + dist[u] < dist[v])
+                pCrawl->weight + dist[u] < dist[v])
             {
-                dist[v] = dist[u] + pCrawl->val;
+                dist[v] = dist[u] + pCrawl->weight;
 
                 // update distance
                 // value in min heap also
@@ -205,26 +366,24 @@ void dijkstra(struct Graph *graph, int src)
 int main()
 {
     // create the graph given in above fugure
-    graphe graph;
-
     int V = 9;
-    graphe_stable(&graph, 5, 0);
-    graphe_ajouter_arc(&graph, 0, 1, 4);
-    graphe_ajouter_arc(&graph, 0, 7, 8);
-    graphe_ajouter_arc(&graph, 1, 2, 8);
-    graphe_ajouter_arc(&graph, 1, 7, 11);
-    graphe_ajouter_arc(&graph, 2, 3, 7);
-    graphe_ajouter_arc(&graph, 2, 8, 2);
-    graphe_ajouter_arc(&graph, 2, 5, 4);
-    graphe_ajouter_arc(&graph, 3, 4, 9);
-    graphe_ajouter_arc(&graph, 3, 5, 14);
-    graphe_ajouter_arc(&graph, 4, 5, 10);
-    graphe_ajouter_arc(&graph, 5, 6, 2);
-    graphe_ajouter_arc(&graph, 6, 7, 1);
-    graphe_ajouter_arc(&graph, 6, 8, 6);
-    graphe_ajouter_arc(&graph, 7, 8, 7);
+    struct Graph *graph = createGraph(V);
+    addEdge(graph, 0, 1, 4);
+    addEdge(graph, 0, 7, 8);
+    addEdge(graph, 1, 2, 8);
+    addEdge(graph, 1, 7, 11);
+    addEdge(graph, 2, 3, 7);
+    addEdge(graph, 2, 8, 2);
+    addEdge(graph, 2, 5, 4);
+    addEdge(graph, 3, 4, 9);
+    addEdge(graph, 3, 5, 14);
+    addEdge(graph, 4, 5, 10);
+    addEdge(graph, 5, 6, 2);
+    addEdge(graph, 6, 7, 1);
+    addEdge(graph, 6, 8, 6);
+    addEdge(graph, 7, 8, 7);
 
-    dijkstra(&graph, 0);
+    dijkstra(graph, 0);
 
     return 0;
 }

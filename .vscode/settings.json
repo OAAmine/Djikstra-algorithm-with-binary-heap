@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "graphe-4.h": "c",
-        "geekforgeeks.h": "c"
+        "geekforgeeks.h": "c",
+        "msuc.h": "c"
     }
 }
